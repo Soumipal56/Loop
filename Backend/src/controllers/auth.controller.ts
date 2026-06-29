@@ -60,6 +60,37 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+export const resendOTP = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    
+    if (user) {
+      const otp = generateOTP();
+      const otpExpires = new Date(Date.now() + 5 * 60 * 1000); // 5 mins
+      
+      user.otp = otp;
+      user.otpExpires = otpExpires;
+      await user.save();
+
+      try {
+        await sendOTPEmail(email, otp);
+      } catch (err) {
+        console.error('Email failed to send: ', err);
+      }
+
+      res.status(200).json({ 
+        message: 'A new OTP has been sent to your email',
+        otp: otp // Returning for dev purposes
+      });
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: (error as Error).message });
+  }
+};
+
 export const verifyOTP = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, otp } = req.body;

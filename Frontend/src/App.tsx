@@ -1,8 +1,42 @@
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { LoginForm } from './features/auth/components/LoginForm';
+import { RegisterForm } from './features/auth/components/RegisterForm';
+import { OTPForm } from './features/auth/components/OTPForm';
+import { Dashboard } from './features/auth/components/Dashboard';
+import { CourseCatalogue } from './features/courses/components/CourseCatalogue';
+import { CourseDetail } from './features/courses/components/CourseDetail';
+import { CoursesLayout } from './components/layout/CoursesLayout';
+import { useAuth } from './features/auth/hooks/useAuth';
+import { useEffect } from 'react';
 
-const App = () => {
+function App() {
+  const { fetchUser, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      fetchUser().catch(() => {
+        // User is not logged in, ignore
+      });
+    }
+  }, [fetchUser, isAuthenticated]);
+
   return (
-    <div>App</div>
-  )
+    <Router>
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<LoginForm />} />
+        <Route path="/register" element={<RegisterForm />} />
+        <Route path="/verify-otp" element={<OTPForm />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        
+        {/* Layout for Course pages */}
+        <Route path="/courses" element={<CoursesLayout />}>
+          <Route index element={<CourseCatalogue />} />
+          <Route path=":id" element={<CourseDetail />} />
+        </Route>
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+export default App;

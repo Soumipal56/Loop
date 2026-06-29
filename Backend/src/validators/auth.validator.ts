@@ -15,3 +15,7 @@ export const otpValidator = [
   check('email', 'Please include a valid email').isEmail(),
   check('otp', 'OTP is required').not().isEmpty(),
 ];
+
+export const resendOtpValidator = [
+  check('email', 'Please include a valid email').isEmail(),
+];
