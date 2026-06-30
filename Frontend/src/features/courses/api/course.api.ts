@@ -48,3 +48,8 @@ export const checkEnrollment = async (id: string): Promise<{ isEnrolled: boolean
   const response = await axios.get(`${API_URL}/${id}/enrollment-status`, { withCredentials: true });
   return response.data;
 };
+
+export const getEnrolledCoursesDashboard = async (): Promise<any[]> => {
+  const response = await axios.get(`${API_URL}/enrolled`, { withCredentials: true });
+  return response.data;
+};

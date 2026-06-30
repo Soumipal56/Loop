@@ -4,6 +4,7 @@ import * as courseApi from '../api/course.api';
 export interface CourseState {
   courses: courseApi.Course[];
   currentCourse: courseApi.CourseDetail | null;
+  enrolledCourses: courseApi.Course[];
   isEnrolled: boolean;
   isLoading: boolean;
   error: string | null;
@@ -12,6 +13,7 @@ export interface CourseState {
 const initialState: CourseState = {
   courses: [],
   currentCourse: null,
+  enrolledCourses: [],
   isEnrolled: false,
   isLoading: false,
   error: null,
@@ -58,9 +60,21 @@ export const checkEnrollment = createAsyncThunk(
   async (id: string, { rejectWithValue }) => {
     try {
       const data = await courseApi.checkEnrollment(id);
-      return data; // { isEnrolled: boolean, ... }
+      return data.isEnrolled;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to check enrollment');
+    }
+  }
+);
+
+export const fetchDashboardCourses = createAsyncThunk(
+  'course/fetchDashboardCourses',
+  async (_, { rejectWithValue }) => {
+    try {
+      const data = await courseApi.getEnrolledCoursesDashboard();
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch dashboard courses');
     }
   }
 );
@@ -116,8 +130,21 @@ const courseSlice = createSlice({
         state.error = action.payload as string;
       })
       // Check Enrollment
-      .addCase(checkEnrollment.fulfilled, (state, action: PayloadAction<{isEnrolled: boolean}>) => {
-        state.isEnrolled = action.payload.isEnrolled;
+      .addCase(checkEnrollment.fulfilled, (state, action: PayloadAction<boolean>) => {
+        state.isEnrolled = action.payload;
+      })
+      // Fetch Dashboard Courses
+      .addCase(fetchDashboardCourses.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchDashboardCourses.fulfilled, (state, action: PayloadAction<courseApi.Course[]>) => {
+        state.isLoading = false;
+        state.enrolledCourses = action.payload;
+      })
+      .addCase(fetchDashboardCourses.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
       });
   },
 });

@@ -1,10 +1,11 @@
 import { useDispatch, useSelector } from 'react-redux';
+import { useCallback } from 'react';
 import type { AppDispatch, RootState } from '../../../store/store';
-import { fetchCourses, fetchCourseById, clearCurrentCourse, enrollInCourse, checkEnrollment } from '../state/course.slice';
+import { fetchCourses, fetchCourseById, enrollInCourse, checkEnrollment, fetchDashboardCourses, clearCurrentCourse } from '../state/course.slice';
 
 export const useCourses = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { courses, currentCourse, isEnrolled, isLoading, error } = useSelector((state: RootState) => state.course);
+  const { courses, currentCourse, enrolledCourses, isEnrolled, isLoading, error } = useSelector((state: RootState) => state.course);
 
   const getCourses = () => {
     dispatch(fetchCourses());
@@ -22,6 +23,10 @@ export const useCourses = () => {
     dispatch(checkEnrollment(id));
   };
 
+  const getDashboardCourses = useCallback(() => {
+    return dispatch(fetchDashboardCourses()).unwrap();
+  }, [dispatch]);
+
   const resetCurrentCourse = () => {
     dispatch(clearCurrentCourse());
   };
@@ -29,6 +34,7 @@ export const useCourses = () => {
   return {
     courses,
     currentCourse,
+    enrolledCourses,
     isEnrolled,
     isLoading,
     error,
@@ -36,6 +42,7 @@ export const useCourses = () => {
     getCourseById,
     enroll,
     verifyEnrollment,
+    getDashboardCourses,
     resetCurrentCourse,
   };
 };
