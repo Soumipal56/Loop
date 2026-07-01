@@ -114,7 +114,7 @@ export const verifyOTP = async (req: Request, res: Response): Promise<void> => {
     res.cookie('jwt', token, {
       httpOnly: true,
       secure: config.nodeEnv === 'production',
-      sameSite: 'strict',
+      sameSite: config.nodeEnv === 'production' ? 'none' : 'strict',
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
@@ -145,6 +145,8 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
   res.cookie('jwt', '', {
     httpOnly: true,
     expires: new Date(0),
+    secure: config.nodeEnv === 'production',
+    sameSite: config.nodeEnv === 'production' ? 'none' : 'strict',
   });
   res.status(200).json({ message: 'Logged out successfully' });
 };
