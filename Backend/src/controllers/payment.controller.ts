@@ -6,7 +6,7 @@ import mongoose from 'mongoose';
 
 // Initialize Stripe with secret key from env
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: '2025-01-27.acacia',
+  apiVersion: '2026-06-24.dahlia',
 });
 
 // @desc    Create a Stripe checkout session for course enrollment

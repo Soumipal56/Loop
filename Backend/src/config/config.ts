@@ -18,4 +18,5 @@ export const config = {
   jwtSecret: process.env.JWT_SECRET as string,
   emailUser: process.env.EMAIL_USER as string,
   emailPass: process.env.EMAIL_PASS as string,
+  frontendUrl: process.env.FRONTEND_URL as string || 'http://localhost:5173',
 };
