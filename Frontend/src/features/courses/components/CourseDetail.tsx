@@ -1,74 +1,79 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useCourses } from '../hooks/useCourses';
 import { useAuth } from '../../auth/hooks/useAuth';
-import { CheckCircle, X } from 'lucide-react';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
+import {
+  CheckCircle2, Lock, PlayCircle, BookOpen, Clock, Users,
+} from 'lucide-react';
 
 export const CourseDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { currentCourse, isLoading: isCourseLoading, error, isEnrolled, getCourseById, checkout, verifyEnrollment, resetCurrentCourse } = useCourses();
+  const {
+    currentCourse, isLoading: isCourseLoading, error, isEnrolled,
+    getCourseById, checkout, verifyEnrollment, resetCurrentCourse,
+  } = useCourses();
   const { user, fetchUser, isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  const [searchParams] = useSearchParams();
-  const success = searchParams.get('success');
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [searchParams] = [new URLSearchParams(window.location.search)];
+  const [showSuccessModal, setShowSuccessModal] = React.useState(false);
 
-  useEffect(() => {
-    if (success === 'true') {
-      setShowSuccessModal(true);
-      navigate('.', { replace: true });
-    }
-  }, [success, navigate]);
-
-  useEffect(() => {
+  React.useEffect(() => {
     if (!isAuthenticated) {
-      fetchUser().catch(() => {
-        // User is not logged in, ignore
-      });
+      fetchUser().catch(() => {});
     }
   }, [isAuthenticated, fetchUser]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (id) {
       getCourseById(id);
-      if (user) {
-        verifyEnrollment(id);
-      }
+      if (user) verifyEnrollment(id);
     }
-    return () => {
-      resetCurrentCourse();
-    };
+    return () => { resetCurrentCourse(); };
   }, [id, user]);
 
-  const handleEnrollClick = async () => {
-    if (!user) {
-      navigate('/login');
-      return;
+  React.useEffect(() => {
+    if (searchParams.get('success') === 'true') {
+      setShowSuccessModal(true);
+      window.history.replaceState({}, '', window.location.pathname);
     }
-    
+  }, []);
+
+  const handleEnrollClick = async () => {
+    if (!user) { navigate('/login'); return; }
     if (id) {
       try {
         const url = await checkout(id);
-        if (url) {
-          window.location.href = url as string;
-        }
+        if (url) window.location.href = url as string;
       } catch (err) {
         console.error('Checkout failed', err);
       }
     }
   };
 
+  // Skeleton loading
   if (isCourseLoading || isAuthLoading) {
     return (
-      <div className="min-h-screen bg-background flex justify-center items-center">
-        <div className="h-12 w-12 rounded-full border-t-2 border-primary animate-spin" />
+      <div className="min-h-screen bg-background">
+        <div className="bg-white border-b border-border">
+          <div className="max-w-6xl mx-auto px-4 py-10 grid lg:grid-cols-[1fr_280px] gap-8">
+            <div className="space-y-4">
+              <Skeleton className="h-6 w-24 rounded-full" />
+              <Skeleton className="h-9 w-3/4" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-10 w-40 mt-4" />
+            </div>
+            <Skeleton className="h-44 rounded-xl" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -76,151 +81,148 @@ export const CourseDetail = () => {
   if (error || !currentCourse) {
     return (
       <div className="min-h-screen bg-background flex flex-col justify-center items-center text-center p-8">
-        <p className="text-destructive font-medium text-xl">{error || 'Course not found'}</p>
-        <Button onClick={() => navigate('/courses')} variant="outline" className="mt-6 border-border">
-          Back to Catalogue
-        </Button>
+        <p className="text-destructive font-medium text-lg mb-4">{error || 'Course not found'}</p>
+        <Button onClick={() => navigate('/courses')} variant="outline" size="sm">Back to Catalogue</Button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-20">
-      {/* Hero Section */}
-      <div className="relative border-b border-border bg-card overflow-hidden">
-        <div className="absolute top-[-50%] right-[-10%] w-[60%] h-[150%] rounded-full bg-primary/5 blur-[120px] pointer-events-none" />
-        
-        <div className="relative z-10 max-w-5xl mx-auto px-8 py-16 md:py-24 space-y-6">
-          <div className="inline-block px-3 py-1 rounded-full bg-primary/20 text-primary text-sm font-medium border border-primary/20 mb-4">
-            Course
+    <div className="min-h-screen bg-background">
+      {/* Hero */}
+      <div className="bg-white border-b border-border">
+        <div className="max-w-6xl mx-auto px-4 py-10 grid lg:grid-cols-[1fr_280px] gap-8 items-start">
+          <div className="space-y-4">
+            <Badge variant="secondary" className="bg-accent text-accent-foreground border-0 font-medium">
+              Course
+            </Badge>
+            <h1 className="text-3xl font-bold text-foreground leading-tight tracking-tight">
+              {currentCourse.title}
+            </h1>
+            <p className="text-muted-foreground leading-relaxed max-w-xl">
+              {currentCourse.description}
+            </p>
+            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <BookOpen className="w-4 h-4" />
+                {currentCourse.chapters?.reduce((acc: number, ch: any) => acc + (ch.lessons?.length || 0), 0)} lessons
+              </span>
+              <Separator orientation="vertical" className="h-4" />
+              <span className="flex items-center gap-1.5">
+                <Users className="w-4 h-4" /> Enrolled students
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <span className="text-2xl font-bold text-foreground">
+                {currentCourse.price === 0 ? 'Free' : `₹${currentCourse.price}`}
+              </span>
+              {isEnrolled ? (
+                <Button asChild>
+                  <Link to={currentCourse.chapters[0]?.lessons[0]
+                    ? `/courses/${currentCourse._id}/lessons/${currentCourse.chapters[0].lessons[0]._id}`
+                    : '#'
+                  }>
+                    <PlayCircle className="w-4 h-4 mr-2" /> Continue Learning
+                  </Link>
+                </Button>
+              ) : (
+                <Button onClick={handleEnrollClick}>
+                  {!user ? 'Login to Enroll' : `Enroll Now`}
+                </Button>
+              )}
+            </div>
           </div>
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
-            {currentCourse.title}
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl leading-relaxed">
-            {currentCourse.description}
-          </p>
-          
-          <div className="pt-8 flex items-center space-x-6">
-            {isEnrolled ? (
-              <Button size="lg" className="px-8 shadow-[0_0_20px_rgba(var(--primary),0.3)]" asChild>
-                <Link to={currentCourse.chapters[0]?.lessons[0] ? `/courses/${currentCourse._id}/lessons/${currentCourse.chapters[0].lessons[0]._id}` : '#'}>
-                  Continue learning
-                </Link>
-              </Button>
-            ) : (
-              <Button 
-                size="lg" 
-                onClick={handleEnrollClick}
-                className="px-8 bg-primary hover:bg-primary/90 shadow-[0_0_20px_rgba(var(--primary),0.3)]"
-              >
-                {!user ? 'Log in to Enroll' : `Enroll Now`}
-              </Button>
-            )}
-          </div>
+
+          {/* Stats card */}
+          <Card className="border-border shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold text-muted-foreground">This course includes</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              {[
+                { icon: BookOpen, label: `${currentCourse.chapters?.length || 0} chapters` },
+                { icon: Clock, label: 'On-demand video lessons' },
+                { icon: Users, label: 'Community access' },
+                { icon: CheckCircle2, label: 'Certificate of completion' },
+              ].map(({ icon: Icon, label }) => (
+                <div key={label} className="flex items-center gap-2.5 text-muted-foreground">
+                  <Icon className="w-4 h-4 text-muted-foreground/60 shrink-0" />
+                  {label}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         </div>
       </div>
 
-      {/* Curriculum Section */}
-      <div className="max-w-4xl mx-auto px-8 py-16">
-        <h2 className="text-3xl font-bold mb-8 flex items-center gap-3">
-          <span className="text-primary">⚡</span> Curriculum
-        </h2>
-        
-        <div className="bg-card border border-border rounded-xl shadow-xl overflow-hidden">
-          <Accordion type="multiple" className="w-full">
-            {currentCourse.chapters.map((chapter) => (
-              <AccordionItem key={chapter._id} value={chapter._id} className="border-border px-6">
-                <AccordionTrigger className="text-lg font-semibold py-6 hover:no-underline hover:text-primary transition-colors">
-                  <div className="flex items-center text-left">
-                    <span className="text-muted-foreground mr-4 text-sm font-normal">
-                      Chapter {chapter.order}
-                    </span>
+      {/* Curriculum */}
+      <div className="max-w-6xl mx-auto px-4 py-10">
+        <h2 className="text-lg font-semibold text-foreground mb-4">Course Curriculum</h2>
+        <Card className="border-border shadow-none overflow-hidden">
+          <Accordion type="multiple" defaultValue={[currentCourse.chapters?.[0]?._id]} className="w-full">
+            {currentCourse.chapters.map((chapter: any) => (
+              <AccordionItem key={chapter._id} value={chapter._id} className="border-border px-4">
+                <AccordionTrigger className="text-sm font-semibold text-foreground hover:text-primary hover:no-underline py-4">
+                  <div className="flex items-center gap-3 text-left">
+                    <span className="text-muted-foreground text-xs font-normal">Ch. {chapter.order}</span>
                     {chapter.title}
                   </div>
+                  <span className="ml-auto mr-2 text-xs font-normal text-muted-foreground">
+                    {chapter.lessons?.length || 0} lessons
+                  </span>
                 </AccordionTrigger>
-                <AccordionContent className="pb-6">
-                  <ul className="space-y-3">
-                    {chapter.lessons.map((lesson) => (
-                      isEnrolled ? (
-                        <Link 
-                          to={`/courses/${currentCourse._id}/lessons/${lesson._id}`} 
-                          key={lesson._id}
-                          className="block group"
-                        >
-                          <li className="flex items-center justify-between p-4 rounded-lg bg-background/50 border border-border group-hover:border-primary/50 group-hover:bg-muted/50 transition-all shadow-sm">
-                            <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                                ▶
-                              </div>
-                              <span className="font-medium group-hover:text-primary transition-colors">{lesson.title}</span>
-                            </div>
-                            <span className="text-sm text-muted-foreground font-mono">
-                              {lesson.duration}
-                            </span>
-                          </li>
-                        </Link>
-                      ) : (
-                        <li 
-                          key={lesson._id} 
-                          className="flex items-center justify-between p-4 rounded-lg bg-background/50 border border-border opacity-60 cursor-not-allowed"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                              🔒
-                            </div>
-                            <span className="font-medium">{lesson.title}</span>
+                <AccordionContent className="pb-2">
+                  <ul className="space-y-0.5">
+                    {chapter.lessons.map((lesson: any) => (
+                      <li key={lesson._id}>
+                        {isEnrolled ? (
+                          <Link
+                            to={`/courses/${currentCourse._id}/lessons/${lesson._id}`}
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors group"
+                          >
+                            <PlayCircle className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary shrink-0 transition-colors" />
+                            <span className="text-sm text-foreground/80 flex-1">{lesson.title}</span>
+                            <span className="text-xs text-muted-foreground tabular-nums">{lesson.duration}</span>
+                          </Link>
+                        ) : (
+                          <div className="flex items-center gap-3 px-3 py-2.5 opacity-50 cursor-not-allowed">
+                            <Lock className="w-4 h-4 text-muted-foreground shrink-0" />
+                            <span className="text-sm text-foreground/70 flex-1">{lesson.title}</span>
+                            <span className="text-xs text-muted-foreground tabular-nums">{lesson.duration}</span>
                           </div>
-                          <span className="text-sm text-muted-foreground font-mono">
-                            {lesson.duration}
-                          </span>
-                        </li>
-                      )
+                        )}
+                      </li>
                     ))}
                   </ul>
                 </AccordionContent>
               </AccordionItem>
             ))}
-            </Accordion>
-          </div>
-        </div>
-        
-        {/* Success Modal Overlay */}
-        {showSuccessModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-card border border-border shadow-2xl animate-in zoom-in-95 duration-300">
-              <div className="absolute right-4 top-4">
-                <button 
-                  onClick={() => setShowSuccessModal(false)}
-                  className="text-muted-foreground hover:text-foreground transition-colors rounded-full p-1 hover:bg-muted"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+          </Accordion>
+        </Card>
+      </div>
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/20 backdrop-blur-sm">
+          <div className="relative w-full max-w-sm overflow-hidden rounded-2xl bg-card border border-border shadow-2xl">
+            <div className="flex flex-col items-center p-8 text-center space-y-5">
+              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+                <CheckCircle2 className="w-8 h-8 text-green-600" strokeWidth={2} />
               </div>
-              
-              <div className="flex flex-col items-center p-8 text-center space-y-6">
-                <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center">
-                  <CheckCircle className="w-10 h-10 text-green-500" strokeWidth={2.5} />
-                </div>
-                
-                <div className="space-y-2">
-                  <h3 className="text-2xl font-bold tracking-tight">Payment Successful!</h3>
-                  <p className="text-muted-foreground">
-                    You are now officially enrolled in <span className="font-medium text-foreground">{currentCourse.title}</span>.
-                  </p>
-                </div>
-                
-                <Button 
-                  size="lg" 
-                  className="w-full font-semibold"
-                  onClick={() => setShowSuccessModal(false)}
-                >
-                  Start Learning
-                </Button>
+              <div className="space-y-1.5">
+                <h3 className="text-xl font-bold tracking-tight">Payment Successful!</h3>
+                <p className="text-sm text-muted-foreground">
+                  You are now enrolled in <span className="font-medium text-foreground">{currentCourse.title}</span>.
+                </p>
               </div>
+              <Button className="w-full" onClick={() => setShowSuccessModal(false)}>
+                Start Learning
+              </Button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+    </div>
   );
 };

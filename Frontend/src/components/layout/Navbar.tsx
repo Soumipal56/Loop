@@ -20,7 +20,7 @@ export const Navbar = () => {
           {/* Logo / Left Side */}
           <div className="flex-shrink-0 flex items-center gap-6">
             <Link to="/courses" className="text-2xl font-bold text-primary tracking-tight">
-              Tattvera
+              Loop
             </Link>
             <div className="hidden md:flex space-x-4">
               <Link to="/courses" className="text-foreground/80 hover:text-primary transition-colors text-sm font-medium">

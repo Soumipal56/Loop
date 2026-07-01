@@ -28,9 +28,9 @@ export const getCourseById = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    // Populate chapters and their lessons and exclude shortDescription/price
+    // Populate chapters and their lessons and exclude shortDescription
     const course = await Course.findById(req.params.id)
-      .select('-shortDescription -price')
+      .select('-shortDescription')
       .populate({
         path: 'chapters',
         populate: {

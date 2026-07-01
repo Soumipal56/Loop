@@ -196,6 +196,53 @@ const mockCourses = [
       },
     ],
   },
+  {
+    title: "Full-Stack MERN Mastery",
+    shortDescription: "Build a complete web application from scratch using MongoDB, Express, React, and Node.js.",
+    description: "In this comprehensive course, you will learn how to build scalable, full-stack applications using the MERN stack. We cover database design with MongoDB, backend API creation with Express and Node.js, and building dynamic frontends with React.",
+    price: 4999,
+    chapters: [
+      {
+        title: "Introduction to MERN",
+        lessons: [
+          { title: "What is the MERN Stack?", duration: "10:00", videoUrl: "https://example.com/video60" },
+          { title: "Setting up the environment", duration: "15:30", videoUrl: "https://example.com/video61" }
+        ]
+      },
+      {
+        title: "Backend with Node and Express",
+        lessons: [
+          { title: "Creating an Express server", duration: "20:00", videoUrl: "https://example.com/video62" },
+          { title: "RESTful API Design", duration: "25:45", videoUrl: "https://example.com/video63" },
+          { title: "Error Handling and Middleware", duration: "18:15", videoUrl: "https://example.com/video64" }
+        ]
+      },
+      {
+        title: "Database with MongoDB",
+        lessons: [
+          { title: "Introduction to NoSQL and MongoDB", duration: "14:20", videoUrl: "https://example.com/video65" },
+          { title: "Mongoose Models and Schemas", duration: "22:10", videoUrl: "https://example.com/video66" },
+          { title: "CRUD Operations", duration: "30:00", videoUrl: "https://example.com/video67" }
+        ]
+      },
+      {
+        title: "Frontend with React",
+        lessons: [
+          { title: "React Basics Refresher", duration: "16:40", videoUrl: "https://example.com/video68" },
+          { title: "State Management", duration: "24:50", videoUrl: "https://example.com/video69" },
+          { title: "Connecting React to Express", duration: "28:30", videoUrl: "https://example.com/video70" }
+        ]
+      },
+      {
+        title: "Authentication and Deployment",
+        lessons: [
+          { title: "JWT Authentication", duration: "35:15", videoUrl: "https://example.com/video71" },
+          { title: "Deploying Backend to Render", duration: "15:20", videoUrl: "https://example.com/video72" },
+          { title: "Deploying Frontend to Vercel", duration: "12:10", videoUrl: "https://example.com/video73" }
+        ]
+      }
+    ]
+  },
 ];
 
 const connectDB = async () => {
