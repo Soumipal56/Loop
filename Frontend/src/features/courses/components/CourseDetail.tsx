@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useCourses } from '../hooks/useCourses';
 import { useAuth } from '../../auth/hooks/useAuth';
+import { CheckCircle, X } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -13,8 +14,18 @@ import { Button } from '@/components/ui/button';
 export const CourseDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { currentCourse, isLoading: isCourseLoading, error, isEnrolled, getCourseById, enroll, verifyEnrollment, resetCurrentCourse } = useCourses();
+  const { currentCourse, isLoading: isCourseLoading, error, isEnrolled, getCourseById, checkout, verifyEnrollment, resetCurrentCourse } = useCourses();
   const { user, fetchUser, isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const [searchParams] = useSearchParams();
+  const success = searchParams.get('success');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  useEffect(() => {
+    if (success === 'true') {
+      setShowSuccessModal(true);
+      navigate('.', { replace: true });
+    }
+  }, [success, navigate]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -44,9 +55,12 @@ export const CourseDetail = () => {
     
     if (id) {
       try {
-        await enroll(id);
+        const url = await checkout(id);
+        if (url) {
+          window.location.href = url as string;
+        }
       } catch (err) {
-        console.error('Enrollment failed', err);
+        console.error('Checkout failed', err);
       }
     }
   };
@@ -170,6 +184,43 @@ export const CourseDetail = () => {
             </Accordion>
           </div>
         </div>
+        
+        {/* Success Modal Overlay */}
+        {showSuccessModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-card border border-border shadow-2xl animate-in zoom-in-95 duration-300">
+              <div className="absolute right-4 top-4">
+                <button 
+                  onClick={() => setShowSuccessModal(false)}
+                  className="text-muted-foreground hover:text-foreground transition-colors rounded-full p-1 hover:bg-muted"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="flex flex-col items-center p-8 text-center space-y-6">
+                <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center">
+                  <CheckCircle className="w-10 h-10 text-green-500" strokeWidth={2.5} />
+                </div>
+                
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-bold tracking-tight">Payment Successful!</h3>
+                  <p className="text-muted-foreground">
+                    You are now officially enrolled in <span className="font-medium text-foreground">{currentCourse.title}</span>.
+                  </p>
+                </div>
+                
+                <Button 
+                  size="lg" 
+                  className="w-full font-semibold"
+                  onClick={() => setShowSuccessModal(false)}
+                >
+                  Start Learning
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
   );
 };

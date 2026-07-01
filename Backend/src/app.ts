@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import { config } from './config/config.js';
 import authRoutes from './routes/auth.routes.js';
 import courseRoutes from './routes/course.routes.js';
+import webhookRoutes from './routes/webhook.routes.js';
 
 const app: Application = express();
 
@@ -13,6 +14,10 @@ app.use(cors({
   origin: 'http://localhost:5173',
   credentials: true,
 }));
+
+// Stripe webhook must be parsed as raw body
+app.use('/api/webhooks', express.raw({ type: 'application/json' }), webhookRoutes);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());

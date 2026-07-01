@@ -44,6 +44,11 @@ export const enrollInCourse = async (id: string): Promise<any> => {
   return response.data;
 };
 
+export const createCheckoutSession = async (id: string): Promise<{ url: string }> => {
+  const response = await axios.post(`${API_URL}/${id}/checkout`, {}, { withCredentials: true });
+  return response.data;
+};
+
 export const checkEnrollment = async (id: string): Promise<{ isEnrolled: boolean; enrollment?: any }> => {
   const response = await axios.get(`${API_URL}/${id}/enrollment-status`, { withCredentials: true });
   return response.data;

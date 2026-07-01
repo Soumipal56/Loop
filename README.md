@@ -95,4 +95,55 @@ npx tsx src/scripts/seedCourses.ts
 ## Known Limitations
 - **Email OTP Delivery:** The OTP feature relies on standard SMTP (e.g., Nodemailer with Gmail). If you use a standard Gmail account, you must generate and use an App Password rather than your standard password, or the emails will fail to send.
 - **Video Hosting:** Lessons currently display placeholder video content or expect public/external URLs (like YouTube/Vimeo embed links or direct `.mp4` URLs). There is no native video hosting integrated yet.
-- **Payment Processing:** While courses have a `price` attribute displayed in the UI, Stripe or other payment gateways are not yet integrated. Currently, clicking "Enroll" automatically enrolls the user without triggering a checkout flow.
+- **Payment Processing:** Integrated with Stripe Checkout! Clicking "Enroll Now" creates a Stripe Checkout session, and successful payments are securely handled via a backend Stripe webhook which provisions course access.
+
+## Security: Arcjet Integration (Proposed)
+
+To protect critical endpoints such as authentication (login/OTP) and course enrollment from abuse, automated bots, and brute-force attacks, we plan to integrate **Arcjet** for robust rate limiting and bot protection.
+
+### How it would be implemented:
+
+1. **Setup & Initialization:**
+   - Install the Arcjet Node.js SDK: `npm install @arcjet/node`
+   - Obtain an `ARCJET_KEY` from the Arcjet dashboard and add it to the `.env` file.
+   - Initialize the Arcjet client, setting up the base rules for the application.
+
+2. **Bot Protection for Enrollment (`/api/courses/:id/checkout`):**
+   - We will create an Arcjet middleware that uses `detectBot()`.
+   - Applied to checkout routes, it will block automated scripts, scrapers, and headless browsers from spamming the checkout creation endpoint, ensuring that only legitimate user traffic can initiate Stripe sessions.
+
+3. **Rate Limiting for Authentication (`/api/auth/send-otp` and `/api/auth/verify-otp`):**
+   - We will configure a sliding window rate limit rule using `slidingWindow()`.
+   - Example: Limit OTP requests to 5 requests per 10 minutes per IP address to prevent email pumping and brute-force attacks.
+   - An Express middleware will call `arcjet.protect(req)` and block the request with a `429 Too Many Requests` status if the limit is exceeded.
+
+### Example Middleware Implementation:
+```typescript
+import arcjet, { detectBot, slidingWindow } from "@arcjet/node";
+import { Request, Response, NextFunction } from "express";
+
+const aj = arcjet({
+  key: process.env.ARCJET_KEY!,
+  rules: [
+    // Block common bots
+    detectBot({ mode: "LIVE", allow: [] }),
+    // Rate limit: 5 requests per 10 minutes
+    slidingWindow({ mode: "LIVE", interval: "10m", max: 5 }),
+  ],
+});
+
+export const arcjetMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+  const decision = await aj.protect(req, { requested: 1 });
+  
+  if (decision.isDenied()) {
+    if (decision.reason.isBot()) {
+      return res.status(403).json({ message: "Bot detected" });
+    }
+    if (decision.reason.isRateLimit()) {
+      return res.status(429).json({ message: "Too many requests, please try again later." });
+    }
+    return res.status(403).json({ message: "Access denied" });
+  }
+  next();
+};
+```

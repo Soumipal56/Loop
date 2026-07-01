@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { useCallback } from 'react';
 import type { AppDispatch, RootState } from '../../../store/store';
-import { fetchCourses, fetchCourseById, enrollInCourse, checkEnrollment, fetchDashboardCourses, clearCurrentCourse, fetchLessonById, completeLesson } from '../state/course.slice';
+import { fetchCourses, fetchCourseById, enrollInCourse, createCheckout, checkEnrollment, fetchDashboardCourses, clearCurrentCourse, fetchLessonById, completeLesson } from '../state/course.slice';
 
 export const useCourses = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -17,6 +17,10 @@ export const useCourses = () => {
 
   const enroll = (id: string) => {
     return dispatch(enrollInCourse(id)).unwrap();
+  };
+
+  const checkout = (id: string) => {
+    return dispatch(createCheckout(id)).unwrap();
   };
 
   const verifyEnrollment = (id: string) => {
@@ -49,6 +53,7 @@ export const useCourses = () => {
     getCourses,
     getCourseById,
     enroll,
+    checkout,
     verifyEnrollment,
     getDashboardCourses,
     resetCurrentCourse,

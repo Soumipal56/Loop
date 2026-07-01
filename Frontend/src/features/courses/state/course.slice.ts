@@ -59,6 +59,18 @@ export const enrollInCourse = createAsyncThunk(
   }
 );
 
+export const createCheckout = createAsyncThunk(
+  'course/createCheckout',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const data = await courseApi.createCheckoutSession(id);
+      return data.url;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to create checkout session');
+    }
+  }
+);
+
 export const checkEnrollment = createAsyncThunk(
   'course/checkEnrollment',
   async (id: string, { rejectWithValue }) => {
