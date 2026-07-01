@@ -43,19 +43,7 @@ app.get('/api', (req: Request, res: Response) => {
   res.send('API is running...');
 });
 
-// Single-Server Deployment: Serve Frontend Static Files in Production
-if (config.nodeEnv === 'production') {
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
-  
-  // Assuming frontend is built to ../../Frontend/dist relative to the built server.js in /dist
-  app.use(express.static(path.join(__dirname, '../../../Frontend/dist')));
-  
-  // Any route not caught by the API will be handled by React Router
-  app.get('*', (req: Request, res: Response) => {
-    res.sendFile(path.resolve(__dirname, '../../../Frontend/dist', 'index.html'));
-  });
-}
+// Frontend is deployed separately on Vercel, so we don't serve static files here.
 
 // Error Handling Middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
