@@ -51,7 +51,7 @@ export const logoutUser = createAsyncThunk('auth/logout', async (_, { rejectWith
   }
 });
 
-interface AuthState {
+export interface AuthState {
   user: any | null;
   isAuthenticated: boolean;
   isLoading: boolean;
