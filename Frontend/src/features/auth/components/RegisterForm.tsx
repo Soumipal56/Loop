@@ -24,8 +24,8 @@ export const RegisterForm = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-slate-50">
-      <Card className="w-[400px] shadow-md">
+    <div className="flex justify-center items-center min-h-screen bg-slate-50 px-4">
+      <Card className="w-full max-w-[400px] shadow-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Register</CardTitle>
           <CardDescription>Create an account to get started</CardDescription>

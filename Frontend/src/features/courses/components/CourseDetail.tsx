@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useCourses } from '../hooks/useCourses';
 import { useAuth } from '../../auth/hooks/useAuth';
 import {
@@ -89,8 +89,10 @@ export const CourseDetail = () => {
           
           <div className="pt-8 flex items-center space-x-6">
             {isEnrolled ? (
-              <Button size="lg" className="px-8 shadow-[0_0_20px_rgba(var(--primary),0.3)]">
-                Continue learning
+              <Button size="lg" className="px-8 shadow-[0_0_20px_rgba(var(--primary),0.3)]" asChild>
+                <Link to={currentCourse.chapters[0]?.lessons[0] ? `/courses/${currentCourse._id}/lessons/${currentCourse.chapters[0].lessons[0]._id}` : '#'}>
+                  Continue learning
+                </Link>
               </Button>
             ) : (
               <Button 
@@ -126,20 +128,40 @@ export const CourseDetail = () => {
                 <AccordionContent className="pb-6">
                   <ul className="space-y-3">
                     {chapter.lessons.map((lesson) => (
-                      <li 
-                        key={lesson._id} 
-                        className="flex items-center justify-between p-4 rounded-lg bg-background/50 border border-border hover:border-primary/50 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0">
-                            ▶
+                      isEnrolled ? (
+                        <Link 
+                          to={`/courses/${currentCourse._id}/lessons/${lesson._id}`} 
+                          key={lesson._id}
+                          className="block group"
+                        >
+                          <li className="flex items-center justify-between p-4 rounded-lg bg-background/50 border border-border group-hover:border-primary/50 group-hover:bg-muted/50 transition-all shadow-sm">
+                            <div className="flex items-center gap-3">
+                              <div className="h-8 w-8 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                                ▶
+                              </div>
+                              <span className="font-medium group-hover:text-primary transition-colors">{lesson.title}</span>
+                            </div>
+                            <span className="text-sm text-muted-foreground font-mono">
+                              {lesson.duration}
+                            </span>
+                          </li>
+                        </Link>
+                      ) : (
+                        <li 
+                          key={lesson._id} 
+                          className="flex items-center justify-between p-4 rounded-lg bg-background/50 border border-border opacity-60 cursor-not-allowed"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                              🔒
+                            </div>
+                            <span className="font-medium">{lesson.title}</span>
                           </div>
-                          <span className="font-medium">{lesson.title}</span>
-                        </div>
-                        <span className="text-sm text-muted-foreground font-mono">
-                          {lesson.duration}
-                        </span>
-                      </li>
+                          <span className="text-sm text-muted-foreground font-mono">
+                            {lesson.duration}
+                          </span>
+                        </li>
+                      )
                     ))}
                   </ul>
                 </AccordionContent>

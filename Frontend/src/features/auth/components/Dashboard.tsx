@@ -9,16 +9,14 @@ import { BookOpen } from 'lucide-react';
 
 export const Dashboard = () => {
   const { user, fetchUser, logout, isAuthenticated } = useAuth();
-  const { enrolledCourses, getDashboardCourses, isLoading: isCoursesLoading } = useCourses();
+  const { enrolledCourses, getDashboardCourses, isLoading: isCoursesLoading, error: coursesError } = useCourses();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      fetchUser().catch(() => navigate('/login'));
-    } else {
+    if (isAuthenticated) {
       getDashboardCourses();
     }
-  }, [isAuthenticated, fetchUser, navigate, getDashboardCourses]);
+  }, [isAuthenticated, getDashboardCourses]);
 
   const handleLogout = async () => {
     await logout();
@@ -62,6 +60,11 @@ export const Dashboard = () => {
         
         {isCoursesLoading ? (
           <div className="text-center py-12 text-muted-foreground">Loading courses...</div>
+        ) : coursesError ? (
+          <Card className="p-12 text-center border-dashed">
+            <h3 className="text-xl font-semibold mb-2 text-destructive">Failed to load courses</h3>
+            <p className="text-muted-foreground">{coursesError}</p>
+          </Card>
         ) : enrolledCourses.length === 0 ? (
           <Card className="p-12 text-center border-dashed">
             <h3 className="text-xl font-semibold mb-2">You aren't enrolled in any courses yet.</h3>

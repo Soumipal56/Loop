@@ -53,3 +53,13 @@ export const getEnrolledCoursesDashboard = async (): Promise<any[]> => {
   const response = await axios.get(`${API_URL}/enrolled`, { withCredentials: true });
   return response.data;
 };
+
+export const getLessonById = async (courseId: string, lessonId: string): Promise<{ lesson: Lesson; isCompleted: boolean }> => {
+  const response = await axios.get(`${API_URL}/${courseId}/lessons/${lessonId}`, { withCredentials: true });
+  return response.data;
+};
+
+export const markLessonComplete = async (courseId: string, lessonId: string): Promise<any> => {
+  const response = await axios.post(`${API_URL}/${courseId}/lessons/${lessonId}/complete`, {}, { withCredentials: true });
+  return response.data;
+};

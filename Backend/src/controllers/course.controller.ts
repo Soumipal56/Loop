@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import Course from '../models/course.model.js';
 import '../models/chapter.model.js';
-import '../models/lesson.model.js';
+import Lesson from '../models/lesson.model.js';
 import Enrollment from '../models/enrollment.model.js';
 import mongoose from 'mongoose';
 
@@ -23,6 +23,11 @@ export const getAllCourses = async (req: Request, res: Response): Promise<void> 
 // @access  Public
 export const getCourseById = async (req: Request, res: Response): Promise<void> => {
   try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      res.status(400).json({ message: 'Invalid course ID' });
+      return;
+    }
+
     // Populate chapters and their lessons and exclude shortDescription/price
     const course = await Course.findById(req.params.id)
       .select('-shortDescription -price')
@@ -51,6 +56,12 @@ export const getCourseById = async (req: Request, res: Response): Promise<void> 
 export const enrollCourse = async (req: Request, res: Response): Promise<void> => {
   try {
     const courseId = req.params.id;
+    
+    if (!mongoose.isValidObjectId(courseId)) {
+      res.status(400).json({ message: 'Invalid course ID' });
+      return;
+    }
+
     const userId = (req as any).user._id;
 
     const course = await Course.findById(courseId);
@@ -85,6 +96,12 @@ export const enrollCourse = async (req: Request, res: Response): Promise<void> =
 export const checkEnrollment = async (req: Request, res: Response): Promise<void> => {
   try {
     const courseId = req.params.id;
+
+    if (!mongoose.isValidObjectId(courseId)) {
+      res.status(400).json({ message: 'Invalid course ID' });
+      return;
+    }
+
     const userId = (req as any).user._id;
 
     const enrollment = await Enrollment.findOne({ user: userId, course: courseId });
@@ -121,7 +138,9 @@ export const getEnrolledCourses = async (req: Request, res: Response): Promise<v
         },
       });
 
-    const dashboardData = enrollments.map(enrollment => {
+    const dashboardData = enrollments
+      .filter(enrollment => enrollment.course != null)
+      .map(enrollment => {
       const course = enrollment.course as any;
       let totalLessons = 0;
       
@@ -152,5 +171,111 @@ export const getEnrolledCourses = async (req: Request, res: Response): Promise<v
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server Error fetching enrolled courses' });
+  }
+};
+
+// @desc    Get lesson by ID
+// @route   GET /api/courses/:id/lessons/:lessonId
+// @access  Private
+export const getLessonById = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id: courseId, lessonId } = req.params;
+
+    if (!mongoose.isValidObjectId(courseId) || !mongoose.isValidObjectId(lessonId)) {
+      res.status(400).json({ message: 'Invalid course or lesson ID' });
+      return;
+    }
+
+    const userId = (req as any).user._id;
+
+    // Check enrollment
+    const enrollment = await Enrollment.findOne({ user: userId, course: courseId });
+    if (!enrollment) {
+      res.status(403).json({ message: 'Not enrolled in this course' });
+      return;
+    }
+
+    // Get lesson
+    const lesson = await Lesson.findById(lessonId);
+    if (!lesson) {
+      res.status(404).json({ message: 'Lesson not found' });
+      return;
+    }
+
+    // Check if it's completed
+    const isCompleted = enrollment.completedLessons?.some(id => id.toString() === lesson._id.toString()) || false;
+
+    res.json({ lesson, isCompleted });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error fetching lesson' });
+  }
+};
+
+// @desc    Mark lesson as complete
+// @route   POST /api/courses/:id/lessons/:lessonId/complete
+// @access  Private
+export const markLessonComplete = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id: courseId, lessonId } = req.params;
+
+    if (!mongoose.isValidObjectId(courseId) || !mongoose.isValidObjectId(lessonId)) {
+      res.status(400).json({ message: 'Invalid course or lesson ID' });
+      return;
+    }
+
+    const userId = (req as any).user._id;
+
+    const enrollment = await Enrollment.findOne({ user: userId, course: courseId });
+    if (!enrollment) {
+      res.status(403).json({ message: 'Not enrolled in this course' });
+      return;
+    }
+
+    const lesson = await Lesson.findById(lessonId);
+    if (!lesson) {
+      res.status(404).json({ message: 'Lesson not found' });
+      return;
+    }
+
+    if (!enrollment.completedLessons) {
+      enrollment.completedLessons = [];
+    }
+
+    // Add to completed lessons if not already there
+    if (!enrollment.completedLessons.some(id => id.toString() === lesson._id.toString())) {
+      enrollment.completedLessons.push(lesson._id as any);
+      
+      // Calculate actual progress
+      const course = await Course.findById(courseId).populate({
+        path: 'chapters',
+        populate: {
+          path: 'lessons',
+          model: 'Lesson'
+        }
+      });
+
+      let totalLessons = 0;
+      if (course && course.chapters) {
+        course.chapters.forEach((chapter: any) => {
+          totalLessons += chapter.lessons ? chapter.lessons.length : 0;
+        });
+      }
+
+      if (totalLessons > 0) {
+        enrollment.progress = Math.round((enrollment.completedLessons.length / totalLessons) * 100);
+      }
+
+      if (enrollment.progress === 100) {
+         enrollment.status = 'completed';
+      }
+
+      await enrollment.save();
+    }
+
+    res.json({ message: 'Lesson marked as complete', progress: enrollment.progress });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error marking lesson complete' });
   }
 };

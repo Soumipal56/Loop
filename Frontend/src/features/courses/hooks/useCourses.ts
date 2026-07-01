@@ -1,11 +1,11 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { useCallback } from 'react';
 import type { AppDispatch, RootState } from '../../../store/store';
-import { fetchCourses, fetchCourseById, enrollInCourse, checkEnrollment, fetchDashboardCourses, clearCurrentCourse } from '../state/course.slice';
+import { fetchCourses, fetchCourseById, enrollInCourse, checkEnrollment, fetchDashboardCourses, clearCurrentCourse, fetchLessonById, completeLesson } from '../state/course.slice';
 
 export const useCourses = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { courses, currentCourse, enrolledCourses, isEnrolled, isLoading, error } = useSelector((state: RootState) => state.course);
+  const { courses, currentCourse, enrolledCourses, isEnrolled, isLoading, error, currentLesson, isLessonCompleted } = useSelector((state: RootState) => state.course);
 
   const getCourses = () => {
     dispatch(fetchCourses());
@@ -31,6 +31,14 @@ export const useCourses = () => {
     dispatch(clearCurrentCourse());
   };
 
+  const getLesson = useCallback((courseId: string, lessonId: string) => {
+    dispatch(fetchLessonById({ courseId, lessonId }));
+  }, [dispatch]);
+
+  const markComplete = useCallback(async (courseId: string, lessonId: string) => {
+    return dispatch(completeLesson({ courseId, lessonId })).unwrap();
+  }, [dispatch]);
+
   return {
     courses,
     currentCourse,
@@ -44,5 +52,9 @@ export const useCourses = () => {
     verifyEnrollment,
     getDashboardCourses,
     resetCurrentCourse,
+    currentLesson,
+    isLessonCompleted,
+    getLesson,
+    markComplete,
   };
 };

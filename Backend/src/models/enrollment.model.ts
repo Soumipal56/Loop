@@ -6,6 +6,7 @@ export interface IEnrollment extends Document {
   enrolledAt: Date;
   progress: number;
   status: string;
+  completedLessons: mongoose.Types.ObjectId[];
 }
 
 const EnrollmentSchema: Schema = new Schema(
@@ -15,6 +16,7 @@ const EnrollmentSchema: Schema = new Schema(
     enrolledAt: { type: Date, default: Date.now },
     progress: { type: Number, default: 0 }, // percentage 0-100
     status: { type: String, enum: ['active', 'completed', 'dropped'], default: 'active' },
+    completedLessons: [{ type: Schema.Types.ObjectId, ref: 'Lesson' }],
   },
   { timestamps: true }
 );

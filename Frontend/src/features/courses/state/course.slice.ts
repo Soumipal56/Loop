@@ -8,6 +8,8 @@ export interface CourseState {
   isEnrolled: boolean;
   isLoading: boolean;
   error: string | null;
+  currentLesson: courseApi.Lesson | null;
+  isLessonCompleted: boolean;
 }
 
 const initialState: CourseState = {
@@ -17,6 +19,8 @@ const initialState: CourseState = {
   isEnrolled: false,
   isLoading: false,
   error: null,
+  currentLesson: null,
+  isLessonCompleted: false,
 };
 
 export const fetchCourses = createAsyncThunk(
@@ -79,12 +83,37 @@ export const fetchDashboardCourses = createAsyncThunk(
   }
 );
 
+export const fetchLessonById = createAsyncThunk(
+  'course/fetchLessonById',
+  async ({ courseId, lessonId }: { courseId: string; lessonId: string }, { rejectWithValue }) => {
+    try {
+      const data = await courseApi.getLessonById(courseId, lessonId);
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch lesson');
+    }
+  }
+);
+
+export const completeLesson = createAsyncThunk(
+  'course/completeLesson',
+  async ({ courseId, lessonId }: { courseId: string; lessonId: string }, { rejectWithValue }) => {
+    try {
+      const data = await courseApi.markLessonComplete(courseId, lessonId);
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to mark lesson complete');
+    }
+  }
+);
+
 const courseSlice = createSlice({
   name: 'course',
   initialState,
   reducers: {
     clearCurrentCourse: (state) => {
       state.currentCourse = null;
+      state.isEnrolled = false;
     }
   },
   extraReducers: (builder) => {
@@ -106,7 +135,6 @@ const courseSlice = createSlice({
       .addCase(fetchCourseById.pending, (state) => {
         state.isLoading = true;
         state.error = null;
-        state.isEnrolled = false;
       })
       .addCase(fetchCourseById.fulfilled, (state, action: PayloadAction<courseApi.CourseDetail>) => {
         state.isLoading = false;
@@ -143,6 +171,34 @@ const courseSlice = createSlice({
         state.enrolledCourses = action.payload;
       })
       .addCase(fetchDashboardCourses.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      // Fetch Lesson By ID
+      .addCase(fetchLessonById.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+        state.currentLesson = null;
+      })
+      .addCase(fetchLessonById.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.currentLesson = action.payload.lesson;
+        state.isLessonCompleted = action.payload.isCompleted;
+      })
+      .addCase(fetchLessonById.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      // Complete Lesson
+      .addCase(completeLesson.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(completeLesson.fulfilled, (state) => {
+        state.isLoading = false;
+        state.isLessonCompleted = true;
+      })
+      .addCase(completeLesson.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       });

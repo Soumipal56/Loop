@@ -4,7 +4,9 @@ import {
   getCourseById, 
   enrollCourse, 
   checkEnrollment,
-  getEnrolledCourses
+  getEnrolledCourses,
+  getLessonById,
+  markLessonComplete
 } from '../controllers/course.controller.js';
 import { protect } from '../middlewares/auth.middleware.js';
 
@@ -15,5 +17,7 @@ router.route('/enrolled').get(protect, getEnrolledCourses);
 router.route('/:id').get(getCourseById);
 router.route('/:id/enroll').post(protect, enrollCourse);
 router.route('/:id/enrollment-status').get(protect, checkEnrollment);
+router.route('/:id/lessons/:lessonId').get(protect, getLessonById);
+router.route('/:id/lessons/:lessonId/complete').post(protect, markLessonComplete);
 
 export default router;
